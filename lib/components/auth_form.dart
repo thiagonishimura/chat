@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:chat/components/user_image_picker.dart';
 import 'package:chat/models/auth_form_data.dart';
 import 'package:flutter/material.dart';
 
@@ -17,9 +20,26 @@ class _AuthFormState extends State<AuthForm> {
   final _formKey = GlobalKey<FormState>();
   final _formData = AuthFormData();
 
+  void _handleImagePick(File image) {
+    _formData.image = image;
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
   void _submit() {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
+
+    if (_formData.image == null && _formData.isSignup) {
+      return _showError('Image not selected!');
+    }
 
     widget.onSubmit(_formData);
   }
@@ -34,6 +54,10 @@ class _AuthFormState extends State<AuthForm> {
           key: _formKey,
           child: Column(
             children: [
+              if (_formData.isSignup)
+                UserImagePicker(
+                  onImagePick: _handleImagePick,
+                ),
               if (_formData.isSignup)
                 TextFormField(
                   key: const ValueKey('name'),
@@ -67,7 +91,7 @@ class _AuthFormState extends State<AuthForm> {
                 initialValue: _formData.password,
                 onChanged: (password) => _formData.password = password,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Senha'),
+                decoration: const InputDecoration(labelText: 'Password'),
                 validator: (localPassword) {
                   final password = localPassword ?? '';
                   if (password.length < 6) {
@@ -79,17 +103,17 @@ class _AuthFormState extends State<AuthForm> {
               const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: _submit,
-                child: Text(_formData.isLogin ? 'Entrar' : 'Cadastrar'),
+                child: Text(_formData.isLogin ? 'Login' : 'Signup'),
               ),
               TextButton(
-                child: Text(_formData.isLogin
-                    ? 'Criar uma nova conta?'
-                    : 'Já possui cadastro?'),
                 onPressed: () {
                   setState(() {
                     _formData.toggleAuthMode();
                   });
                 },
+                child: Text(_formData.isLogin
+                    ? 'Create a new account?'
+                    : 'Already have an account?'),
               ),
             ],
           ),
